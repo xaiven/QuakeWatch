@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quakewatch-svc
+  namespace: quakewatch
+spec:
+  type: NodePort   # use LoadBalancer in cloud, ClusterIP for internal only
+  selector:
+    app: quakewatch
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      nodePort: 30500   # optional fixed nodePort for local access (choose 30000-32767)

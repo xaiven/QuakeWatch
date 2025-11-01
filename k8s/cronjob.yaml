@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quakewatch-cron
+  namespace: quakewatch
+spec:
+  schedule: "0 * * * *"   # every hour
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: quakewatch-cron
+              image: alexsay23/quakewatch:1.0
+              imagePullPolicy: IfNotPresent
+              command: ["python", "scripts/fetch_quakes.py"]  # adjust to your script path
+              envFrom:
+                - configMapRef:
+                    name: quakewatch-config
+                - secretRef:
+                    name: quakewatch-secret
+          restartPolicy: OnFailure

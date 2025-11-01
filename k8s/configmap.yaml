@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quakewatch-config
+  namespace: quakewatch
+data:
+  FLASK_DEBUG: "true"
+  APP_NAME: "QuakeWatch"
+  SAMPLE_CONFIG: "some-value"

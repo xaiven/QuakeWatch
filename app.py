@@ -4,7 +4,7 @@ matplotlib.use('Agg')  # Force non-GUI backend before any other matplotlib impor
 import os
 import logging
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, jsonify
 from dashboard import dashboard_blueprint
 from utils import timestamp_to_str  # Import our custom filter
 
@@ -42,8 +42,18 @@ def create_app():
     # Register custom Jinja2 filter so templates can use |timestamp_to_str
     app.jinja_env.filters['timestamp_to_str'] = timestamp_to_str
 
+    @app.route("/healthz")
+    def healthz():
+        return {"status": "ok"}, 200
+
+    @app.route("/livez")
+    def livez():
+        return {"status": "ok"}, 200
+
+
     return app
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = create_app()
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
+
