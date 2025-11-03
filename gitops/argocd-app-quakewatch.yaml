@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'git@github.com:xaiven/QuakeWatch.git'
+    repoURL: https://github.com/xaiven/QuakeWatch.git
     targetRevision: main
     path: charts/quakewatch
     helm:
