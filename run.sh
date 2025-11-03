@@ -31,3 +31,21 @@ helm upgrade --install quakewatch oci://ghcr.io/xaiven/helm-charts/quakewatch \
   # Check
 kubectl get pods -n quakewatch
 
+# namespace for ArgoCD and monitoring
+kubectl create ns argocd --dry-run=client -o yaml | kubectl apply -f -
+kubectl create ns monitoring --dry-run=client -o yaml | kubectl apply -f -
+
+# install ArgoCD
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl rollout status deploy/argocd-server -n argocd
+
+# Access ArgoCD UI
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# open: https://localhost:8080
+
+# Initial PASSWORD # user = admin
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.password}' | base64 -d; echo
+
+kubectl apply -f gitops/argocd-app-quakewatch.yaml
+
+
