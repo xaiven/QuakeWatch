@@ -13,4 +13,21 @@ kubectl get hpa -n quakewatch
 kubectl get cronjob -n quakewatch
 
 
+# Use minikube context
+kubectl config use-context minikube
+kubectl get nodes
+
+# Login GHCR
+echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+echo "$GHCR_TOKEN" | helm registry login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+
+#Helm Re-Deploy
+helm upgrade --install quakewatch oci://ghcr.io/xaiven/helm-charts/quakewatch \
+  --version 0.1.0 \
+  --namespace quakewatch --create-namespace \
+  --set image.repository=ghcr.io/xaiven/quakewatch \
+  --set image.tag=0.1.0
+
+  # Check
+kubectl get pods -n quakewatch
 

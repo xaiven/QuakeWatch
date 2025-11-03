@@ -1,0 +1,56 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12" ]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install packages
+        run: |
+          pip install -r requirements.txt
+          pip install pylint
+
+      - name: Run pylint
+        run: pylint **/*.py
+
+  build-and-push:
+    needs: build-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+
+      - name: Build Docker image
+        run: |
+          IMAGE_TAG=${GITHUB_SHA::7}
+          docker build -t ghcr.io/${{ secrets.GHCR_USERNAME }}/quakewatch:$IMAGE_TAG .
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/quakewatch:$IMAGE_TAG
+
+      - name: Package Helm chart
+        run: |
+          helm package charts/quakewatch
+          helm registry login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password "${{ secrets.GHCR_TOKEN }}"
+          helm push quakewatch-*.tgz oci://ghcr.io/${{ secrets.GHCR_USERNAME }}/helm-charts

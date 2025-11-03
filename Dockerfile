@@ -6,6 +6,8 @@ WORKDIR /app
 
 # Copy all files to the container
 COPY . /app
+# Copy cron scripts
+COPY scripts /app/scripts
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
@@ -15,3 +17,4 @@ EXPOSE 5000
 
 # Command to run the Flask app
 CMD ["python", "app.py"]
+
