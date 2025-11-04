@@ -1,3 +1,5 @@
 Flask
 requests
 matplotlib
+prometheus-flask-exporter==0.23.0
+
