@@ -9,7 +9,6 @@ from dashboard import dashboard_blueprint
 from utils import timestamp_to_str  # Import our custom filter
 from prometheus_flask_exporter import PrometheusMetrics
 
-
 def create_app():
     app = Flask(__name__)
 
