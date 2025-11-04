@@ -13,8 +13,6 @@ spec:
       parameters:
         - name: image.repository
           value: docker.io/alexsay23/quakewatch
-        - name: image.tag
-          value: "2.0"
   destination:
     server: https://kubernetes.default.svc
     namespace: quakewatch
