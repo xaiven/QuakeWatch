@@ -1,39 +1,57 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "🚀 Starting QuakeWatch DevOps Environment..."
 
+# ---------- START KUBERNETES CLUSTER ----------
 echo "📦 Starting Minikube..."
-minikube start --cpus=4 --memory=6g
+minikube start --driver=docker --memory=6000 --cpus=4
 
-echo "🔄 Setting kubectl context to minikube"
+echo "⛓ Setting kubectl context to minikube"
 kubectl config use-context minikube
 
-echo "📁 Ensuring required namespaces exist..."
-for ns in argocd quakewatch monitoring; do
-  kubectl get ns $ns >/dev/null 2>&1 || kubectl create namespace $ns
-done
+# ---------- NAMESPACES HEALTH ----------
+echo "📂 Ensuring quakewatch & monitoring namespaces exist..."
+kubectl get ns quakewatch >/dev/null 2>&1 || kubectl create ns quakewatch
+kubectl get ns monitoring >/dev/null 2>&1 || kubectl create ns monitoring
 
-echo "✅ Checking ArgoCD status..."
-kubectl get pods -n argocd 2>/dev/null | grep argocd-server >/dev/null
-if [ $? -ne 0 ]; then
-  echo "⚙️ Installing ArgoCD..."
-  kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-fi
+# ---------- START ARGOCD PORT FORWARD ----------
+echo "🔄 Starting ArgoCD port-forward (port 8080)"
 
-echo "⌛ Waiting for ArgoCD server to be ready..."
-kubectl rollout status deployment/argocd-server -n argocd
+# Kill existing forward
+fwd=$(lsof -ti :8080)
+if [ ! -z "$fwd" ]; then kill -9 $fwd; fi
 
-echo "🔁 Refreshing ArgoCD sync..."
-kubectl annotate application quakewatch -n argocd argocd.argoproj.io/refresh=hard --overwrite 2>/dev/null
+kubectl port-forward svc/argocd-server -n argocd 8080:443 >/dev/null 2>&1 &
 
-echo "🚀 Waiting for quakewatch pods..."
-kubectl wait --for=condition=available deploy/quakewatch -n quakewatch --timeout=120s 2>/dev/null
+# ---------- START QUakeWATCH APP PORT-FORWARD ----------
+echo "🌍 Starting QuakeWatch app port-forward (port 5000 -> 8080)"
 
-echo "✅ Environment ready!"
+fwd=$(lsof -ti :8080)
+if [ ! -z "$fwd" ]; then kill -9 $fwd; fi
+
+POD=$(kubectl get pods -n quakewatch -l app.kubernetes.io/name=quakewatch -o jsonpath="{.items[0].metadata.name}")
+kubectl port-forward -n quakewatch $POD 8080:5000 >/dev/null 2>&1 &
+
+# ---------- START PROMETHEUS PORT-FORWARD ----------
+echo "📊 Starting Prometheus port-forward (port 9090)"
+
+fwd=$(lsof -ti :9090)
+if [ ! -z "$fwd" ]; then kill -9 $fwd; fi
+
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090 >/dev/null 2>&1 &
+
+# ---------- START GRAFANA PORT-FORWARD ----------
+echo "📈 Starting Grafana port-forward (port 3000)"
+
+fwd=$(lsof -ti :3000)
+if [ ! -z "$fwd" ]; then kill -9 $fwd; fi
+
+kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80 >/dev/null 2>&1 &
+
+echo "✅ All services running:"
+echo "🌐 QuakeWatch -> http://localhost:8080"
+echo "🎛 Grafana -> http://localhost:3000"
+echo "📡 Prometheus -> http://localhost:9090"
+echo "🛠 ArgoCD -> http://localhost:8080 (UI login required)"
 echo ""
-echo "🌐 ArgoCD UI: https://localhost:8080 (run port-forward below)"
-echo "🌐 QuakeWatch App: http://localhost:8080 (after app port-forward)"
-echo ""
-echo "To access UIs run in separate terminals:"
-echo "kubectl port-forward svc/argocd-server -n argocd 8080:443"
-echo "kubectl port-forward \  $(kubectl get pods -n quakewatch -l app.kubernetes.io/name=quakewatch -o jsonpath='{.items[0].metadata.name}') \  -n quakewatch 8080:5000"
+echo "🔥 Environment ready!"
