@@ -48,4 +48,20 @@ kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath='{.data.pas
 
 kubectl apply -f gitops/argocd-app-quakewatch.yaml
 
+# Prometheus & Grafana
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring
+kubectl get pods -n monitoring
+
+kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
+# Username: admin
+# Password: kubectl get secret -n monitoring monitoring-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n monitoring 9090:9090
+
+
+
+
 

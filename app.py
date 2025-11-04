@@ -7,10 +7,13 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, jsonify
 from dashboard import dashboard_blueprint
 from utils import timestamp_to_str  # Import our custom filter
+from prometheus_flask_exporter import PrometheusMetrics
+
 
 def create_app():
     app = Flask(__name__)
 
+    metrics = PrometheusMetrics(app)
     # -------------------------
     # Logging Configuration
     # -------------------------
@@ -57,6 +60,5 @@ if __name__ == "__main__":
     app = create_app()
     app.run(host="0.0.0.0", port=5000, debug=False)
 
-from prometheus_flask_exporter import PrometheusMetrics
-metrics = PrometheusMetrics(app)
+
 
