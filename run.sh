@@ -61,6 +61,14 @@ kubectl port-forward svc/monitoring-grafana -n monitoring 3000:80
 
 kubectl port-forward svc/monitoring-kube-prometheus-prometheus -n monitoring 9090:9090
 
+###### AFTER REBOOT:::
+# 1. Start Docker Desktop (manually)
+# 2. Start WSL (in Ubuntu terminal)
+k3d cluster start qw
+kubectl get nodes   # just to confirm cluster is running
+# 3. Run your automation script
+./start_quakewatch.sh # To start QuakeWatch, Grafana, Prometheus, ArgoCD ...
+
 
 
 
